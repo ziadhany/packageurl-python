@@ -277,5 +277,9 @@
   "https://packagemanager.rstudio.com/cran/2022-06-23/src/contrib/curl_4.3.2.tar.gz": "pkg:cran/curl@4.3.2?download_url=https://packagemanager.rstudio.com/cran/2022-06-23/src/contrib/curl_4.3.2.tar.gz",
   "https://github.com/TG1999/first_repo/commit/98e516011d6e096e25247b82fc5f196bbeecff10": "pkg:github/tg1999/first_repo@98e516011d6e096e25247b82fc5f196bbeecff10",
   "https://gitlab.com/TG1999/first_repo/-/commit/bf04e5f289885cf2f20a92b387bcc6df33e30809": "pkg:gitlab/tg1999/first_repo@bf04e5f289885cf2f20a92b387bcc6df33e30809",
-  "https://bitbucket.org/TG1999/first_repo/commits/16a60c4a74ef477cd8c16ca82442eaab2fbe8c86": "pkg:bitbucket/tg1999/first_repo@16a60c4a74ef477cd8c16ca82442eaab2fbe8c86"
+  "https://git.kernel.org/pub/scm/utils/b4/b4.git/commit/?id=477734000555ffc24bf873952e40367deee26f17": "pkg:generic/git.kernel.org/b4/b4@477734000555ffc24bf873952e40367deee26f17",
+  "https://git.kernel.org/pub/scm/docs/kernel/ksmap.git/commit/?id=e8c7bac5321ba31d63496bd7fecea3db1848e355": "pkg:generic/git.kernel.org/kernel/ksmap@e8c7bac5321ba31d63496bd7fecea3db1848e355",
+  "https://git.kernel.org/pub/scm/virt/kvm/mst/qemu.git/commit/?id=7457fe9541b5162f285454947448d553a5d5a531": "pkg:generic/git.kernel.org/kvm/mst/qemu@7457fe9541b5162f285454947448d553a5d5a531",
+  "https://android.googlesource.com/platform/frameworks/base/+/b4da73a935a8c906ff5df562155824d63ac849ab": "pkg:generic/android.googlesource.com/platform/frameworks/base@b4da73a935a8c906ff5df562155824d63ac849ab",
+  "https://android.googlesource.com/device/generic/vulkan-cereal/+/240dedcb0fa917b3d2dcc4a9d4c332697c5e48a0": "pkg:generic/android.googlesource.com/device/generic/vulkan-cereal@240dedcb0fa917b3d2dcc4a9d4c332697c5e48a0"
 }

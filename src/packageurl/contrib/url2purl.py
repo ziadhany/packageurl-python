@@ -667,6 +667,63 @@ def build_bitbucket_purl(url):
     )
 
 
+@purl_router.route("https?://git\.kernel\\.org/.*")
+def build_kernel_purl(url):
+    """
+    Return a PackageURL object from Kernel `url`.
+    For example:
+    https://git.kernel.org/pub/scm/bluetooth/bluez.git/commit/?id=74770b1fd2be612f9c2cf807db81fcdcc35e6560
+    """
+
+    kernel_project_pattern = (
+        r"^https?://git\.kernel\.org/pub/scm/[^/]+/"
+        r"(?P<namespace>.+)/"
+        r"(?P<name>[^/]+?)"
+        r"(?:\.git)?"
+        r"/commit/\?id="
+        r"(?P<version>[0-9a-fA-F]{7,64})/?$"
+    )
+
+    commit_matche = re.search(kernel_project_pattern, url)
+    if commit_matche:
+        namespace = "git.kernel.org/" + commit_matche.group("namespace")
+        return PackageURL(
+            type="generic",
+            namespace=namespace,
+            name=commit_matche.group("name"),
+            version=commit_matche.group("version"),
+            qualifiers={},
+            subpath="",
+        )
+
+
+@purl_router.route("https?://android\.googlesource\\.com/.*")
+def build_android_purl(url):
+    """
+    Return a PackageURL object from Android `url`.
+    For example:
+    https://android.googlesource.com/platform/packages/apps/Settings/+/2968ccc911956fa5813a9a6a5e5c8970e383a60f
+    """
+
+    commit_pattern = (
+        r"^https?://android\.googlesource\.com/"
+        r"(?P<name>.+)"
+        r"/\+/"
+        r"(?P<version>[0-9a-fA-F]{7,64})"
+    )
+
+    commit_matche = re.search(commit_pattern, url)
+    if commit_matche:
+        return PackageURL(
+            type="generic",
+            namespace="android.googlesource.com",
+            name=commit_matche.group("name"),
+            version=commit_matche.group("version"),
+            qualifiers={},
+            subpath="",
+        )
+
+
 @purl_router.route("https?://gitlab\\.com/(?!.*/archive/).*")
 def build_gitlab_purl(url):
     """
