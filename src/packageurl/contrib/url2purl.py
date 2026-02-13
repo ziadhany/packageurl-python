@@ -676,7 +676,7 @@ def build_kernel_purl(url):
     """
 
     kernel_project_pattern = (
-        r"^https?://git\.kernel\.org/pub/scm/[^/]+/"
+        r"^https?://git\.kernel\.org/"
         r"(?P<namespace>.+)/"
         r"(?P<name>[^/]+?)"
         r"(?:\.git)?"
@@ -717,6 +717,36 @@ def build_android_purl(url):
         return PackageURL(
             type="generic",
             namespace="android.googlesource.com",
+            name=commit_matche.group("name"),
+            version=commit_matche.group("version"),
+            qualifiers={},
+            subpath="",
+        )
+
+
+@purl_router.route("https?://sourceforge\\.net/p/.*")
+def build_sourceforge_purl(url):
+    """
+    Return a PackageURL object from sourceforge `url`.
+    For example:
+    https://sourceforge.net/p/djvu/djvulibre-git/ci/e15d51510048927f172f1bf1f27ede65907d940d
+    https://sourceforge.net/p/infrarecorder/code/ci/9361b6f267e7b1c1576c48f6dac6dec18d8a93e0/
+    """
+
+    sourceforge_pattern = (
+        r"^https?://sourceforge\.net/"
+        r"(?P<namespace>.+)/"
+        r"(?P<name>[^/]+?)"
+        r"/ci/"
+        r"(?P<version>[0-9a-fA-F]{7,64})/?$"
+    )
+
+    commit_matche = re.search(sourceforge_pattern, url)
+    if commit_matche:
+        namespace = "sourceforge.net/" + commit_matche.group("namespace")
+        return PackageURL(
+            type="generic",
+            namespace=namespace,
             name=commit_matche.group("name"),
             version=commit_matche.group("version"),
             qualifiers={},
