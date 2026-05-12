@@ -61,59 +61,64 @@ def url2fix(url):
             return
 
 
-@fix_router.route("https?://github\\.com/.*")
+@fix_router.route("https?://github\.com/.*")
 def build_github_fix(url):
     """
     Return a CodeFix object from GitHub `url`.
     For example:
-    https://gitlab.com/tg1999/Firebase/-/commit/bf04e5f289885cf2f20a92b387bcc6df33e30809
+    https://github.com/aboutcode-org/vulnerablecode/commit/818b92ba8fbdbebf5e773d37eddc4a1698b660a4
+    https://github.com/aboutcode-org/vulnerablecode/tree/818b92ba8fbdbebf5e773d37eddc4a1698b660a4
+    https://github.com/aboutcode-org/vulnerablecode/blob/818b92ba8fbdbebf5e773d37eddc4a1698b660a4
     """
-    # https://github.com/<namespace>/<name>/commit/<sha>
     pattern = (
-        r"https?://github.com/"
-        r"(?P<namespace>[^/]+)/(?P<name>[^/]+)/commit/(?P<commit_hash>[0-9a-fA-F]{7,40})/?$"
+        r"https?://github\.com/"
+        r"(?P<namespace>[^/]+)/(?P<name>[^/]+)/"
+        r"(?:commit|blob|tree)/(?P<commit_hash>[0-9a-fA-F]{7,40})"
+        r"(?:/.*)?$"
     )
 
     matches = re.match(pattern, url)
-    if not matches:
-        return
-    parts = matches.groupdict()
-    namespace = parts.get("namespace")
-    name = parts.get("name")
-    commit_hash = parts.get("commit_hash")
+    namespace = matches.group("namespace")
+    name = matches.group("name")
+    commit_hash = matches.group("commit_hash")
+
     vcs_url = f"https://github.com/{namespace}/{name}.git"
     patch_url = f"https://github.com/{namespace}/{name}/commit/{commit_hash}.patch"
     return CodeFix(url=url, vcs_url=vcs_url, commit_hash=commit_hash, patch_url=patch_url)
 
 
-@fix_router.route("https?://gitlab\\.com/.*")
+@fix_router.route("https?://gitlab\.com/.*")
 def build_gitlab_fix(url):
     """
     Return a CodeFix object from Gitlab `url`.
     For example:
-    https://gitlab.com/tg1999/Firebase/-/commit/bf04e5f289885cf2f20a92b387bcc6df33e30809
+    https://gitlab.com/tg1999/Firebase/commit/6ceeeb9feb2b7420230e0d19753a626f9a43f9cb
+    https://gitlab.com/tg1999/Firebase/-/commit/6ceeeb9feb2b7420230e0d19753a626f9a43f9cb
+    https://gitlab.com/tg1999/Firebase/-/blob/6ceeeb9feb2b7420230e0d19753a626f9a43f9cb
+    https://gitlab.com/tg1999/Firebase/-/tree/6ceeeb9feb2b7420230e0d19753a626f9a43f9cb
     """
-    # https://gitlab.com/<ns>/<name>/-/commit/<sha>
-    commit_pattern = (
-        r"https?://gitlab.com/"
-        r"(?P<namespace>[^/]+)/(?P<name>[^/]+)/-/commit/"
-        r"(?P<commit_hash>[0-9a-fA-F]{7,64})/?$"
+    gitlab_pattern = (
+        r"^https?://gitlab\.com/"
+        r"(?P<namespace>[^/]+)/"
+        r"(?P<name>[^/]+)/"
+        r"(?:-/)?"
+        r"(?:commit|blob|tree)/"
+        r"(?P<commit_hash>[0-9a-fA-F]{7,64})"
+        r"(?:/(?P<subpath>.+))?"
+        r"/?$"
     )
 
-    commit_match = re.search(commit_pattern, url)
-    if not commit_match:
-        return
-
-    namespace = commit_match.group("namespace")
-    name = commit_match.group("name")
-    commit_hash = commit_match.group("commit_hash")
+    matches = re.match(gitlab_pattern, url)
+    namespace = matches.group("namespace")
+    name = matches.group("name")
+    commit_hash = matches.group("commit_hash")
 
     vcs_url = f"https://gitlab.com/{namespace}/{name}"
     patch_url = f"https://gitlab.com/{namespace}/{name}/-/commit/{commit_hash}.patch"
     return CodeFix(url=url, vcs_url=vcs_url, commit_hash=commit_hash, patch_url=patch_url)
 
 
-@fix_router.route("https?://bitbucket\\.org/.*")
+@fix_router.route("https?://bitbucket\.org/.*")
 def build_bitbucket_fix(url):
     """
     Return a CodeFix object from BitBucket `url`.
@@ -126,10 +131,7 @@ def build_bitbucket_fix(url):
         r"(?P<namespace>[^/]+)/(?P<name>[^/]+)/commits/(?P<commit_hash>[0-9a-fA-F]{7,64})/?$"
     )
 
-    commit_match = re.search(bitbucket_commit_pattern, url)
-    if not commit_match:
-        return
-
+    commit_match = re.match(bitbucket_commit_pattern, url)
     namespace = commit_match.group("namespace")
     name = commit_match.group("name")
     commit_hash = commit_match.group("commit_hash")
@@ -139,7 +141,7 @@ def build_bitbucket_fix(url):
     return CodeFix(url=url, vcs_url=vcs_url, commit_hash=commit_hash, patch_url=patch_url)
 
 
-SUB_GITLAB_ROUTE_REGEX = [
+SELF_HOSTED_GITLAB_ROUTE_REGEX = [
     r"https?://git\.codelinaro\.org/.*",
     r"https?://salsa\.debian\.org/.*",
     "https?://gitlab\.alpinelinux.org/.*",
@@ -155,7 +157,7 @@ SUB_GITLAB_ROUTE_REGEX = [
     "https?://gitlab\.lisn\.upsaclay\.fr/.*",
     "https?://gitlab\.manjaro\.org/.*",
     "https?://gitlab\.marlam\.de/.*",
-    "https?://gitlab\.matrix.org/.*",
+    "https?://gitlab\.matrix\.org/.*",
     "https?://gitlab\.nic\.cz/.*",
     "https?://gitlab\.ow2\.org/.*",
     "https?://gitlab\.redox-os\.org/.*",
@@ -168,10 +170,10 @@ SUB_GITLAB_ROUTE_REGEX = [
 ]
 
 
-@fix_router.route(*SUB_GITLAB_ROUTE_REGEX)
-def build_gitlab_sub_fix(url):
+@fix_router.route(*SELF_HOSTED_GITLAB_ROUTE_REGEX)
+def build_self_hosted_gitlab_fix(url):
     """
-    Return a CodeFix object from a GitLab Sub domains commit URL
+    Return a CodeFix object from a GitLab self hosted domain URL
     For example:
     https://gitlab.gnome.org/GNOME/gimp/-/commit/112a5e038f0646eae5ae314988ec074433d2b365
     https://git.codelinaro.org/linaro/qcom/project/-/commit/a40a9732c840e5a324fba78b0ff7980b497c3831
@@ -182,17 +184,15 @@ def build_gitlab_sub_fix(url):
         r"^https?://"
         r"(?P<domain>[^/]+)/"
         r"(?P<namespace>.+?)/"
-        r"(?P<name>[^/]+)"
-        r"(?:/"
+        r"(?P<name>[^/]+)/"
         r"(?:-/)?"
-        r"(?P<type>tree|blob|tags|commit)"
-        r"/(?P<commit_hash>[^/]+)"
+        r"(?:tree|blob|commit)/"
+        r"(?P<commit_hash>[^/]+)"
         r"(?:/(?P<subpath>.+))?"
-        r")?"
         r"/?$"
     )
 
-    if gitlab_sub_match := re.search(gitlab_sub_pattern, url):
+    if gitlab_sub_match := re.match(gitlab_sub_pattern, url):
         domain = gitlab_sub_match.group("domain")
         namespace = gitlab_sub_match.group("namespace")
         name = gitlab_sub_match.group("name")
@@ -243,14 +243,11 @@ def build_gitiles_fix(url):
         r"/?$"
     )
 
-    match = re.search(gitiles_project_pattern, url)
-    if not match:
-        return
-
-    domain = match.group("domain")
-    namespace = match.group("namespace")
-    name = match.group("name")
-    commit_hash = match.group("commit_hash")
+    matches = re.match(gitiles_project_pattern, url)
+    domain = matches.group("domain")
+    namespace = matches.group("namespace")
+    name = matches.group("name")
+    commit_hash = matches.group("commit_hash")
 
     if name and namespace:
         project_path = f"{namespace}/{name}"
@@ -287,13 +284,10 @@ def build_gitea_fix(url):
         r"/?$"
     )
 
-    commit_match = re.search(gitea_commit_pattern, url)
-    if not commit_match:
-        return
-
-    namespace = commit_match.group("namespace")
-    name = commit_match.group("name")
-    commit_hash = commit_match.group("commit_hash")
+    matches = re.match(gitea_commit_pattern, url)
+    namespace = matches.group("namespace")
+    name = matches.group("name")
+    commit_hash = matches.group("commit_hash")
 
     vcs_url = f"https://{namespace}/{name}.git"
     patch_url = f"https://{namespace}/{name}/commit/{commit_hash}.patch"
@@ -334,22 +328,22 @@ def build_cgit_fix(url):
         r"(?P<namespace>.+?)/"
         r"(?P<name>[^/]+?)"
         r"(?:\.git)?"
-        r"(?:/commit/(?:[^?]+)?\?.*?\bid=(?P<commit_hash>[0-9a-fA-F]{7,64})(?:&.*)?)?"
+        r"/commit/(?:[^?]+)?\?.*?\bid=(?P<commit_hash>[0-9a-fA-F]{7,64})(?:&.*)?"
         r"/?$"
     )
 
-    if match := re.search(kernel_shorthand, url):
+    if match := re.match(kernel_shorthand, url):
         res = match.groupdict()
         namespace = "git.kernel.org/pub/scm/linux/kernel/git/stable/"
         name = "linux"
         commit_hash = res["commit_hash"]
-    elif match := re.search(cgit_project_pattern, url):
+    elif match := re.match(cgit_project_pattern, url):
         res = match.groupdict()
         name = res["name"]
         namespace = res["namespace"]
         commit_hash = res["commit_hash"]
     else:
-        return None
+        return
 
     vcs_url = f"https://{namespace}/{name}.git"
     patch_url = f"https://{namespace}/{name}.git/patch/?id={commit_hash}"
@@ -374,10 +368,7 @@ def build_allura_fix(url):
         r"/?$"
     )
 
-    commit_match = re.search(allura_pattern, url)
-    if not commit_match:
-        return
-
+    commit_match = re.match(allura_pattern, url)
     namespace = commit_match.group("namespace")
     name = commit_match.group("name")
     commit_hash = commit_match.group("commit_hash")
@@ -413,13 +404,10 @@ def build_gitweb_fix(url):
         r"/(?P<namespace>[^?]*?)"
         r"/?(?=\?)"
         r"(?=.*[?;&]p=(?P<name>[^;&]+?)(?:\.git)?(?:[;&]|$))"
-        r"(?:(?=.*[?;&]h=(?P<commit_hash>[0-9a-fA-F]{7,64}))|)"
+        r"(?=.*[?;&]h=(?P<commit_hash>[0-9a-fA-F]{7,64}))"
     )
 
-    commit_match = re.search(gitweb_pattern, url)
-    if not commit_match:
-        return
-
+    commit_match = re.match(gitweb_pattern, url)
     domain = commit_match.group("domain")
     name = commit_match.group("name")
     namespace = commit_match.group("namespace")
